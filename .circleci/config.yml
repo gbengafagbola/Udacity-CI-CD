@@ -183,8 +183,8 @@ jobs:
             npm audit fix
             npm update path-parse --depth 3
             npm update kind-of --depth 10
+            npm cache clean --force
             npm run migrations > migrations_dump.txt
-            npm  run build -prod
       - run:
           name: Send migration results to memstash
           command: |
