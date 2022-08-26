@@ -179,8 +179,9 @@ jobs:
           name: Run migrations
           command: |
             cd backend
-            npm install
-            npm run build
+            sudo npm cache clean -f
+            sudo npm install -g n
+            sudo n stable
             npm run migrations > migrations_dump.txt
       - run:
           name: Send migration results to memstash
