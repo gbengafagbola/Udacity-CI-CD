@@ -202,7 +202,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible
+            apk add nodejs npm
+            npm install
+
       - run:
           name: Get backend url
           command: |
