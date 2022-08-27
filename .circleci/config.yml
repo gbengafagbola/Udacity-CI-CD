@@ -203,10 +203,6 @@ jobs:
           name: Install dependencies
           command: |
             npm install
-            npm i python
-            npm i ansible
-            npm i node
-            
           name: Get backend url
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
