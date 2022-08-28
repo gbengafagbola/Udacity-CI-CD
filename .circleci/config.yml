@@ -205,7 +205,7 @@ jobs:
           name: Install dependencies
           command: |
             cd frontend
-            apt-get install -y npm 
+            apk add install -y npm 
             # npm install
             # pkg install node
       - run:
