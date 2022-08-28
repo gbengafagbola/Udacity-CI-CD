@@ -199,11 +199,14 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       cd frontend
-      #       apt-get install -y npm
+      - restore_cache:
+        keys: [frontend-build]
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            npm install
+            # pkg install node
       - run:
           name: Get backend url
           command: |
