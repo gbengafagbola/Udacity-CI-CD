@@ -199,14 +199,14 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/
+      # - attach_workspace:
+      #     at: ~/
       - run:
           name: Install dependencies
           command: |
-            yum install -y tar gzip
             cd frontend
-            npm install
+            apt-get install -y npm 
+            # npm install
             # pkg install node
       - run:
           name: Get backend url
