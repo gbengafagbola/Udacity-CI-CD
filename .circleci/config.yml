@@ -205,8 +205,12 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            npm install
+            # npm install
+            sudo apt-get install npm
             # sudo apt-get install npm
+            # apk add --update ansible
+            # apk add --update python
+            # apk add --update 
             # sudo apt install python-pip python-dev
       - run:
           name: Get backend url
