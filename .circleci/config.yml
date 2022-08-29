@@ -15,20 +15,20 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
             aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
 
-  revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
-    steps:
-      - run:
-          name: Revert migrations
-          command: |
-            success_migration=$(curl https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if ((success_migrations== true));
-            then
-              cd backend
-              npm install
-              npm run migrations:revert
-            fi
-          when: on_fail
+  # revert-migrations:
+  #   description: Revert the last migration if successfully run in the current workflow.
+  #   steps:
+  #     - run:
+  #         name: Revert migrations
+  #         command: |
+  #           success_migration=$(curl https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
+  #           if ((success_migrations== true));
+  #           then
+  #             cd backend
+  #             npm install
+  #             npm run migrations:revert
+  #           fi
+  #         when: on_fail
 jobs:
   build-frontend:
     docker:
