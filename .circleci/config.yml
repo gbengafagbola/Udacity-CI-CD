@@ -1,35 +1,65 @@
 version: 2.1
 
 commands:
+  # destroy-environment:
+  #   description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+  #   parameters:      
+  #     id: 
+  #       type: string
+  #   steps:
+  #     - run:
+  #         name: Destroy environments
+  #         when: on_fail
+  #         command: |
+  #           aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+  #           aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+  #           aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
+
+  # revert-migrations:
+  #   description: Revert the last migration if successfully run in the current workflow.
+  #   steps:
+  #     - run:
+  #         name: Revert migrations
+  #         when: on_fail
+  #         command: |
+  #           success_migration=$(curl https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
+  #           if ((success_migrations== true));
+  #           then
+  #             cd backend
+  #             npm install
+  #             npm run migrations:revert
+  #           fi
+
   destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:      
-      id: 
-        type: string
+    description: Destroy backend and frontend cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string      
     steps:
       - run:
-          name: Destroy environments
-          when: on_fail
+          name: Destroy environment << parameters.workflow_id >>
           command: |
-            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
-            aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflow_id >>
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
             aws s3 rb s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --force
+          when: on_fail
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     steps:
       - run:
           name: Revert migrations
-          when: on_fail
           command: |
-            success_migration=$(curl https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            success_migration=$(curl -H "token: ${MEMSTASH_TOKEN}" --request GET https://api.memstash.io/values/migration_key)
             if ((success_migrations== true));
             then
               cd backend
               npm install
               npm run migrations:revert
             fi
+          when: on_fail
 
+          
 jobs:
   build-frontend:
     docker:
@@ -161,7 +191,9 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+            - project/backend/
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}   
 
   configure-infrastructure:
     docker:
@@ -239,9 +271,10 @@ jobs:
             npm install
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            aws s3 sync dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            # aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - destroy-environment:
-          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
 
   deploy-backend:
@@ -262,21 +295,27 @@ jobs:
           name: deploy backend
           no_output_timeout: 30m
           command: |
-            echo ENVIROMENT=development > "backend/.env"
-            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
-            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
-            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
-            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
-            tar -C backend -czvf artifact.tar.gz .
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            # echo ENVIROMENT=development > "backend/.env"
+            # echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            # echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            # echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            # echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            # echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            # echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            # echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            # echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            # echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            # tar -C backend -czvf artifact.tar.gz .
             cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment:
-          id: ${CIRCLE_WORKFLOW_ID:0:7}
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
 
 
