@@ -49,16 +49,15 @@ commands:
     steps:
       - run:
           name: Revert migrations
-          when: on_fail
           command: |
-            SUCCESS=$(curl --insecure  https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_<< parameters.workflow_id >>)
-            if (( $SUCCESS == 1 ));
+            success_migration=$(curl https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            if ((success_migrations== true));
             then
               cd backend
               npm install
               npm run migrations:revert
             fi
-          
+          when: on_fail
 
           
 jobs:
@@ -348,7 +347,7 @@ jobs:
       - run:
           name: Frontend smoke test.
           command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3.website.us-west-2.amazonaws.com"            
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3.website.us-east-1.amazonaws.com"            
             if curl -s ${URL} | grep "Welcome"
             then
               return 1
