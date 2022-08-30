@@ -22,7 +22,7 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            success_migration=$(https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            success_migration=$(curl https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj/migration_${CIRCLE_WORKFLOW_ID:0:7})
             if ((success_migrations== true));
             then
               cd backend
