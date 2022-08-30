@@ -309,7 +309,7 @@ jobs:
             then
               return 1
             else
-              return 0
+              return 1
             fi
       - run:
           name: Get backend url
@@ -323,7 +323,7 @@ jobs:
             # if curl "${API_URL}/api/status" | grep "ok"
             if curl "https://${BACKEND_IP}:3030/api/status" | grep "ok"
             then
-                return 1
+                return 0
             else
                 return 1
             fi
