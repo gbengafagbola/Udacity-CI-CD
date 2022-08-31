@@ -26,6 +26,11 @@ commands:
             then
               cd backend
               npm install
+              npm audit fix --audit-level=critical --force
+              npm install --save-dev webpack@5.74.0
+              npm update mkdirp --depth 2
+              # npm install oauth-sign@^0.9.0
+              npm audit --audit-level=critical
               npm run migrations:revert
             fi
           when: on_fail
