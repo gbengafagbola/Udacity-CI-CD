@@ -255,8 +255,8 @@ jobs:
             # sudo yum install yarn
             yum -y install nodejs
             yum -y install tar gzip
-            yum -y install ansible
-            pip3 install awscli
+            # yum -y install ansible
+            # pip3 install awscli
       - run: 
           name: Get backend url
           command: |
