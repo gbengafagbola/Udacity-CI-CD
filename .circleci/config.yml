@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  aws-cli: circleci/aws-cli@2.0.3
+
 commands:
   destroy-environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
@@ -379,8 +382,8 @@ jobs:
           command: |
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              # aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              # aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             else
