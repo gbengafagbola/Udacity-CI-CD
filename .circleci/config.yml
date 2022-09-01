@@ -250,7 +250,9 @@ jobs:
             # sudo yum install -y nodejs
             # curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
             # sudo yum install yarn
-            yum -y npm i
+            # yum -y npm i
+            curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
+            sudo yum install yarn
             yum -y install nodejs
             yum -y install tar gzip
             apk add --update ansible
