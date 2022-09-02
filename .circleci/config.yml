@@ -251,12 +251,23 @@ jobs:
       - run: 
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            # export BACKEND_IP=$(aws ec2 describe-instances \
+            #   --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            #   --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            #   --output text)
+            # export API_URL="http://${BACKEND_IP}:3030"
+            # echo "API_URL = ${API_URL}"
+            # echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            # cat frontend/.env
+
+            export BACKEND_IP=$(
+              aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text)
+              --filters "Name=tag:project,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text
+            )
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "API_URL = ${API_URL}"
+            echo "${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
@@ -265,8 +276,13 @@ jobs:
             cd frontend
             npm install
             npm run build
+
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 sync dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
+            aws s3 cp dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+
+            # tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            # aws s3 sync dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
+
             # aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -281,9 +297,16 @@ jobs:
           fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
       - attach_workspace:
           at: ~/
+      - restore_cache:
+          keys:
+            - build-backend
+      - run: 
+          name: View content of inventory.txt
+          command: cat ~/project/.circleci/ansible/inventory.txt                      
       - run:
           name: Install dependencies
           command: |
+            apk add --update ansible curl rsync openssh nodejs npm
             apk add --update tar gzip ansible nodejs npm
             pip install awscli
       - run:
