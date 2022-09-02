@@ -303,11 +303,11 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
-      - attach_workspace:
-          at: ~/
       - restore_cache:
           keys:
-            - build-backend
+            - [build-backend]
+      - attach_workspace:
+          at: ~/            
       - run: 
           name: View content of inventory.txt
           command: cat ~/project/.circleci/ansible/inventory.txt                      
@@ -317,6 +317,7 @@ jobs:
             apk add --update ansible curl rsync openssh nodejs npm
             apk add --update tar gzip ansible nodejs npm
             pip install awscli
+            aws --version
       - run:
           name: deploy backend
           # no_output_timeout: 30m
