@@ -4,26 +4,6 @@ orbs:
   aws-cli: circleci/aws-cli@2.0.3
 
 commands:
-
-  dependencies:
-    steps:
-      - run:
-          name: Installing necessary packages
-          command: |
-            sudo apt update
-            sudo apt install -y tar gzip curl software-properties-common
-      - run:
-          name: Installing aws-cli
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-      - run:
-          name: Installing ansible
-          command: |
-            sudo add-apt-repository --yes --update ppa:ansible/ansible
-            sudo apt install ansible
-
   destroy-environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
@@ -303,11 +283,11 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
+      - attach_workspace:
+          at: ~/   
       - restore_cache:
           keys:
-            - [build-backend]
-      - attach_workspace:
-          at: ~/            
+            - build-backend                
       - run: 
           name: View content of inventory.txt
           command: cat ~/project/.circleci/ansible/inventory.txt                      
@@ -315,6 +295,7 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible curl rsync openssh nodejs npm
+            ansible --version
             apk add --update tar gzip ansible nodejs npm
             pip install awscli
             aws --version
@@ -380,7 +361,6 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      # - dependencies
       - run:
           name: Install dependencies
           command: |
