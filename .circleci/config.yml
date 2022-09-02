@@ -393,7 +393,7 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - dependencies
+      # - dependencies
       - run:
           name: Install dependencies
           command: |
@@ -475,7 +475,7 @@ jobs:
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
             fi
             fi
-            
+
 workflows:
   default:
     jobs:
