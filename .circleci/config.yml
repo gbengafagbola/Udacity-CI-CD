@@ -393,6 +393,7 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - dependencies
       - run:
           name: Install dependencies
           command: |
@@ -438,7 +439,7 @@ jobs:
             # if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
             # then
 
-            aws s3 rb --force s3://${OldBucketID}
+            # aws s3 rb --force s3://${OldBucketID}
 
             #   # aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
             #   aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
@@ -448,26 +449,33 @@ jobs:
             # fi
 
 
-      # - run:
-      #     name: Remove old stacks and files
-      #     command: |
-      #       echo OldWorkflowID: "${OldWorkflowID}"
+      - run:
+          name: Remove old stacks and files
+          command: |
 
-      #       # if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            # if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            # then
+            #   aws s3 rm "s3://${OldBucketID}" --recursive
+            #   # aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
+            #   aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            #   aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+            # else
+            #   '----Nothing to Cleanup---'
+            # fi
 
-
-      #       if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
-      #       then
-
-      #         aws s3 rm "s3://${OldBucketID}" --recursive
-
-      #         # aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
-      #         aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-      #         aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-      #       else
-      #         '----Nothing to Cleanup---'
-      #       fi
-
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            then
+            echo "No workflow id found"
+            else
+            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+            then
+              echo "$OldWorkflowID!=${CIRCLE_WORKFLOW_ID:0:7} => will delete old version"
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            fi
+            fi
+            
 workflows:
   default:
     jobs:
