@@ -130,6 +130,12 @@ jobs:
             npm update mkdirp --depth 2
             npm audit --audit-level=critical
 
+
+
+
+
+
+
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -410,17 +416,12 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            # if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            if [[ "${STACK[@]}" =~ "${OldWorkflowID}" ]]
             then
-            echo "No workflow id found"
-            else
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
-            then
-              echo "$OldWorkflowID!=${CIRCLE_WORKFLOW_ID:0:7} => will delete old version"
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws s3 rm s3://udapeople-${OldWorkflowID} --recursive
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
               aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-            fi
             fi
 
 workflows:
