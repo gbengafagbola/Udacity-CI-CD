@@ -1,22 +1,20 @@
 version: 2.1
 
-orbs:
-  aws-cli: circleci/aws-cli@2.0.3
-
 commands:
   destroy-environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
       workflow_id:
-        type: string      
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}       
     steps:
       - run:
           name: Destroy environment << parameters.workflow_id >>
           when: on_fail
           command: |
+            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflow_id >>
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
-            aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}   
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -26,7 +24,7 @@ commands:
           when: on_fail
           command: |
             SUCCESS=$(curl --insecure https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj//migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if ((SUCCESS== true));
+            if ((SUCCESS==1));
             then
               cd ~/project/backend
               npm install
@@ -122,13 +120,17 @@ jobs:
           keys: [backend-build]
       - run:
           name: Scan back-end
-          command: |    
+          command: |  
             cd backend
             npm install
-            npm audit fix --audit-level=critical --force
-            npm install --save-dev webpack@5.74.0
-            npm update mkdirp --depth 2
-            npm audit --audit-level=critical
+            npm audit fix --audit-level=critical
+
+            # cd backend
+            # npm install
+            # npm audit fix --audit-level=critical --force
+            # npm install --save-dev webpack@5.74.0
+            # npm update mkdirp --depth 2
+            # npm audit --audit-level=critical
 
 
 
@@ -416,8 +418,7 @@ jobs:
       - run:
           name: Remove old stacks and files
           command: |
-            # if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
-            if [[ "${STACK[@]}" =~ "${OldWorkflowID}" ]]
+            if [[ "${OldWorkflowID}" =~ "${STACKS[@]}"  ]]
             then
               aws s3 rm s3://udapeople-${OldWorkflowID} --recursive
               aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
