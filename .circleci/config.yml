@@ -163,49 +163,9 @@ jobs:
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory.txt          
       - persist_to_workspace:
-          root: .
+          root: ~/
           paths:
             - ./.circleci/ansible/inventory.txt 
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations
-
-  configure-infrastructure:
-    docker:
-      - image: python:3.7-alpine3.11
-        environment:
-          NODE_ENV: "production"
-          VERSION: "1"
-          ENVIRONMENT: "production"
-          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-          TYPEORM_HOST: $TYPEORM_HOST
-          TYPEORM_USERNAME: $TYPEORM_USERNAME
-          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-          TYPEORM_DATABASE: $TYPEORM_DATABASE
-          TYPEORM_PORT: $TYPEORM_PORT
-          TYPEORM_ENTITIES: $TYPEORM_ENTITIES      
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
-    
-      - attach_workspace:
-          at: .
-      
-      - run:
-          name: Install dependencies
-          command: |
-            # apk add --update ansible 
-            apk add curl
-            apk add --upgrade bash
-            apk add --update ansible
-            apk add openssh-client
-            pip3 install awscli
-      - run:
-          name: Configure server
-          command: |
-            cd .circleci/ansible
-            ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
@@ -213,17 +173,34 @@ jobs:
   # configure-infrastructure:
   #   docker:
   #     - image: python:3.7-alpine3.11
+  #       environment:
+  #         NODE_ENV: "production"
+  #         VERSION: "1"
+  #         ENVIRONMENT: "production"
+  #         TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+  #         TYPEORM_HOST: $TYPEORM_HOST
+  #         TYPEORM_USERNAME: $TYPEORM_USERNAME
+  #         TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+  #         TYPEORM_DATABASE: $TYPEORM_DATABASE
+  #         TYPEORM_PORT: $TYPEORM_PORT
+  #         TYPEORM_ENTITIES: $TYPEORM_ENTITIES      
   #   steps:
   #     - checkout
   #     - add_ssh_keys:
-  #         fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]    
+  #         fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
+    
   #     - attach_workspace:
   #         at: .
+      
   #     - run:
   #         name: Install dependencies
   #         command: |
-  #           apk add --update tar gzip
-  #           pip install awscli 
+  #           # apk add --update ansible 
+  #           apk add curl
+  #           apk add --upgrade bash
+  #           apk add --update ansible
+  #           apk add openssh-client
+  #           pip3 install awscli
   #     - run:
   #         name: Configure server
   #         command: |
@@ -232,6 +209,29 @@ jobs:
   #     - destroy-environment:
   #         workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
   #     - revert-migrations
+
+  configure-infrastructure:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]    
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update tar gzip ansible
+            pip install awscli 
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations
 
   run-migrations:
     docker:
