@@ -24,6 +24,9 @@
 
  # Get the environment variables from CircleCI and add to the EC2 instance
   environment:
+    - NODE_ENV: "{{ lookup('env','NODE_ENV') }}"
+    - VERSION: "{{ lookup('env','VERSION') }}"
+    - ENVIRONMENT: "{{ lookup('env','ENVIRONMENT') }}"   
     - TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION')}}"
     - TYPEORM_ENTITIES: "{{ lookup('env', 'TYPEORM_ENTITIES')}}"
     - TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST')}}"
@@ -39,20 +42,20 @@
         port: 22
         delay: 10
 
-  tasks:
-    - name: persist environment variables
-      become: yes
-      shell: |
-        echo ENVIRONMENT=\"production\" >> /etc/environment
-        echo TYPEORM_CONNECTION=\"$TYPEORM_CONNECTION\" >> /etc/environment
-        echo TYPEORM_ENTITIES=\"$TYPEORM_ENTITIES\" >> /etc/environment
-        echo TYPEORM_HOST=\"$TYPEORM_HOST\" >> /etc/environment
-        echo TYPEORM_PORT=\"$TYPEORM_PORT\" >> /etc/environment
-        echo TYPEORM_USERNAME=\"$TYPEORM_USERNAME\" >> /etc/environment
-        echo TYPEORM_PASSWORD=\"$TYPEORM_PASSWORD\" >> /etc/environment
-        echo TYPEORM_DATABASE=\"$TYPEORM_DATABASE\" >> /etc/environment
-        echo TYPEORM_MIGRATIONS=\"$TYPEORM_MIGRATIONS\" >> /etc/environment
-        echo TYPEORM_MIGRATIONS_DIR=\"$TYPEORM_MIGRATIONS_DIR\" >> /etc/environment
+  # tasks:
+  #   - name: persist environment variables
+  #     become: yes
+  #     shell: |
+  #       echo ENVIRONMENT=\"production\" >> /etc/environment
+  #       echo TYPEORM_CONNECTION=\"$TYPEORM_CONNECTION\" >> /etc/environment
+  #       echo TYPEORM_ENTITIES=\"$TYPEORM_ENTITIES\" >> /etc/environment
+  #       echo TYPEORM_HOST=\"$TYPEORM_HOST\" >> /etc/environment
+  #       echo TYPEORM_PORT=\"$TYPEORM_PORT\" >> /etc/environment
+  #       echo TYPEORM_USERNAME=\"$TYPEORM_USERNAME\" >> /etc/environment
+  #       echo TYPEORM_PASSWORD=\"$TYPEORM_PASSWORD\" >> /etc/environment
+  #       echo TYPEORM_DATABASE=\"$TYPEORM_DATABASE\" >> /etc/environment
+  #       echo TYPEORM_MIGRATIONS=\"$TYPEORM_MIGRATIONS\" >> /etc/environment
+  #       echo TYPEORM_MIGRATIONS_DIR=\"$TYPEORM_MIGRATIONS_DIR\" >> /etc/environment
   roles:
     - configure-server
     - configure-prometheus-node-exporter
