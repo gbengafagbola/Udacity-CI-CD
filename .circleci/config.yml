@@ -263,83 +263,74 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
-      - attach_workspace:
-          at: ~/   
+          fingerprints:
+            - "c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"
       - restore_cache:
-          keys:
-            - build-backend                
-      - run: 
-          name: View content of inventory.txt
-          command: cat ~/project/.circleci/ansible/inventory.txt                      
+          keys: [backend-build]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Set env
+          command: |
+            echo ENVIROMENT=$ENVIROMENT > "backend/.env"
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl rsync openssh ansible
-            ansible --version
-            apk add --update tar gzip nodejs npm
+            apk add --update curl nodejs npm ansible zip
             pip install awscli
-            aws --version
       - run:
-          name: deploy backend
+          name: Deploy backend
           command: |
-            cd backend
-            npm i
-            npm run build
-            cd ..
-            tar -C backend -czvf artifact.tar.gz .
-            cd ~/project/.circleci/ansible
-            echo "Contents  of the inventory.txt file is -------"
-            # cat inventory.txt
-            cat ~/project/.circleci/ansible/inventory.txt
-            # ansible-playbook -i inventory.txt deploy-backend.yml
-            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml -vv 
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
       - destroy-environment
       - revert-migrations
 
   smoke-test:
-      docker:
-        - image: circleci/node:13.8.0
-      steps:
-        - checkout
-        - run:
-            name: Install dependencies
-            command: |
-              sudo apt update
-              sudo apt upgrade -y
-              sudo apt install -y curl
-              sudo apt install -y awscli
-              aws --version
-        - run:
-            name: Backend smoke test.
-            command: |
-              export BACKEND_IP=$(aws ec2 describe-instances \
-                --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --output text)
-              export API_URL="http://${BACKEND_IP}:3030"
-              echo "API_URL = ${API_URL}"
-              if curl "${API_URL}/api/status" | grep "ok"
-              then
-                echo SUCCESS
-                exit 0
-              else
-                echo FAIL
-                exit 1
-              fi
-        - run:
-            name: Frontend smoke test.
-            command: |
-              URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com/#/employees"
-              echo ${URL}
-              if curl -s ${URL} | grep "Welcome"
-              then
-                exit 0
-              else
-                exit 1
-              fi
-        - destroy-environment
-        - revert-migrations
+    docker:
+      - image: python:3.7-alpine3.11 
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl
+            pip install awscli
+      - run:
+          name: Backend smoke test.
+          command: |
+            BACKEND_URL=`curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" \
+                        --request GET https://api.memstash.io/values/backendURL`
+            API_URL="${BACKEND_URL}/api/status"
+            echo "SMOKE Testing backend URL: $API_URL"
+            BACKEND_RES=`curl $API_URL | grep -c 'status":"ok'`
+            echo $BACKEND_RES > smoketestres.txt
+            echo "BACKEND SMOKE TEST RESULT:: $BACKEND_RES"
+      - run:
+          name: Frontend smoke test.
+          command: |
+            FRONTEND_URL=`aws cloudformation describe-stacks --stack-name frontend-infra-${CIRCLE_WORKFLOW_ID:0:7} \
+                          --query "Stacks[0].Outputs[?OutputKey=='WebsiteURL'].OutputValue" --output text`
+            echo "FRONTEND_URL: " $FRONTEND_URL
+            FRONTEND_RES=`curl -s ${FRONTEND_URL} | grep -c "Welcome"`;
+            echo $FRONTEND_RES >> smoketestres.txt
+            echo "FRONTEND SMOKE TEST RESULT:: $FRONTEND_RES"
+      - run:
+          name: Report Smoke test status
+          command: |
+            STATUS=$(if [ 2 -eq `grep -c 1 smoketestres.txt` ]; then echo 0; else echo 1; fi)
+            echo "SMOKE TEST EXIT STATUS: $STATUS"
+            exit $STATUS
+      - destroy-environment
+      - revert-migrations
 
   cloudfront-update:
       docker:
