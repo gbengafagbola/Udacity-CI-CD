@@ -258,37 +258,43 @@ jobs:
       - revert-migrations
 
   deploy-backend:
-      docker:
-        - image: python:3.7-alpine3.11
-      steps:
-        - checkout
-        - add_ssh_keys:
-            fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
-        - attach_workspace:
-            at: .
-        - run:
-            name: Install dependencies
-            command: |
-              apk add --update ansible curl rsync openssh nodejs npm
-              ansible --version
-              pip install awscli
-              aws --version
-        - run:
-            name: Deploy backend
-            command: |
-              cd backend
-              npm i
-              npm run build
-              cp package* ./dist
-              cd ..
-              # Zip the directory
-              tar -C backend -czvf artifact.tar.gz .
-              mkdir .circleci/ansible/roles/deploy/files
-              mv artifact.tar.gz .circleci/ansible/roles/deploy/files
-              cd .circleci/ansible
-              echo "Contents  of the inventory.txt file is -------"
-              cat inventory.txt
-              ansible-playbook -i inventory.txt deploy-backend.yml  
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
+      - attach_workspace:
+          at: ~/   
+      - restore_cache:
+          keys:
+            - build-backend                
+      - run: 
+          name: View content of inventory.txt
+          command: cat ~/project/.circleci/ansible/inventory.txt                      
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl rsync openssh
+            ansible --version
+            apk add --update tar gzip ansible nodejs npm
+            pip install awscli
+            aws --version
+      - run:
+          name: deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            cd ~/project/.circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            # cat inventory.txt
+            cat ~/project/.circleci/ansible/inventory.txt
+            # ansible-playbook -i inventory.txt deploy-backend.yml
+            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml -vv 
+
         - destroy-environment
         - revert-migrations
 
