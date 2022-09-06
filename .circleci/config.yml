@@ -296,41 +296,46 @@ jobs:
 
   smoke-test:
     docker:
-      - image: python:3.7-alpine3.11 
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apk add --update curl
+            apk add --update curl nodejs npm
             pip install awscli
       - run:
           name: Backend smoke test.
           command: |
-            BACKEND_URL=`curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID}" \
-                        --request GET https://api.memstash.io/values/backendURL`
-            API_URL="${BACKEND_URL}/api/status"
-            echo "SMOKE Testing backend URL: $API_URL"
-            BACKEND_RES=`curl $API_URL | grep -c 'status":"ok'`
-            echo $BACKEND_RES > smoketestres.txt
-            echo "BACKEND SMOKE TEST RESULT:: $BACKEND_RES"
+            export BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+              echo SUCCESS
+              exit 0
+            else
+              echo FAIL
+              exit 1
+            fi
       - run:
           name: Frontend smoke test.
           command: |
-            FRONTEND_URL=`aws cloudformation describe-stacks --stack-name frontend-infra-${CIRCLE_WORKFLOW_ID:0:7} \
-                          --query "Stacks[0].Outputs[?OutputKey=='WebsiteURL'].OutputValue" --output text`
-            echo "FRONTEND_URL: " $FRONTEND_URL
-            FRONTEND_RES=`curl -s ${FRONTEND_URL} | grep -c "Welcome"`;
-            echo $FRONTEND_RES >> smoketestres.txt
-            echo "FRONTEND SMOKE TEST RESULT:: $FRONTEND_RES"
-      - run:
-          name: Report Smoke test status
-          command: |
-            STATUS=$(if [ 2 -eq `grep -c 1 smoketestres.txt` ]; then echo 0; else echo 1; fi)
-            echo "SMOKE TEST EXIT STATUS: $STATUS"
-            exit $STATUS
-      - destroy-environment
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com/#/employees"
+            echo ${URL}
+            if curl -s ${URL} | grep "Welcome"
+            then
+              exit 0
+            else
+              exit 1
+            fi
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
+
 
   cloudfront-update:
       docker:
