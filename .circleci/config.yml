@@ -247,6 +247,7 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
+             cat frontend/.env
             curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
             yum -y install nodejs
             npm install -g npm
