@@ -324,10 +324,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo apt update
-            sudo apt upgrade -y
-            sudo apt install -y curl
-            sudo apt install -y awscli
+            apk add --update curl nodejs npm
+            pip install awscli
             aws --version
       - run:
           name: Backend smoke test.
