@@ -313,14 +313,14 @@ jobs:
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
-            if curl "${API_URL}/api/status" | grep "ok"
-            then
-              echo SUCCESS
-              exit 0
-            else
-              echo FAIL
-              exit 1
-            fi
+            # if curl "${API_URL}/api/status" | grep "ok"
+            # then
+            #   echo SUCCESS
+            #   exit 0
+            # else
+            #   echo FAIL
+            #   exit 1
+            # fi
       - run:
           name: Frontend smoke test.
           command: |
@@ -332,7 +332,7 @@ jobs:
             else
               exit 1
             fi
-      - destroy-environment:
+      - destroy-environment
       - revert-migrations
 
 
