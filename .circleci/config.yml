@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  aws-cli: circleci/aws-cli@2.0.3
-
 commands:
   destroy-environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
@@ -26,7 +23,7 @@ commands:
           when: on_fail
           command: |
             SUCCESS=$(curl --insecure https://kvdb.io/TJj3g2oMjrWdsGy7mq8DSj//migration_${CIRCLE_WORKFLOW_ID:0:7})
-            if ((SUCCESS== true));
+            if ((SUCCESS==1));
             then
               cd ~/project/backend
               npm install
@@ -162,7 +159,6 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-            - project/backend/
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations
@@ -170,17 +166,17 @@ jobs:
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
-        environment:
-          NODE_ENV: "production"
-          VERSION: "1"
-          ENVIRONMENT: "production"
-          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
-          TYPEORM_HOST: $TYPEORM_HOST
-          TYPEORM_USERNAME: $TYPEORM_USERNAME
-          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
-          TYPEORM_DATABASE: $TYPEORM_DATABASE
-          TYPEORM_PORT: $TYPEORM_PORT
-          TYPEORM_ENTITIES: $TYPEORM_ENTITIES      
+        # environment:
+        #   NODE_ENV: "production"
+        #   VERSION: "1"
+        #   ENVIRONMENT: "production"
+        #   TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+        #   TYPEORM_HOST: $TYPEORM_HOST
+        #   TYPEORM_USERNAME: $TYPEORM_USERNAME
+        #   TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+        #   TYPEORM_DATABASE: $TYPEORM_DATABASE
+        #   TYPEORM_PORT: $TYPEORM_PORT
+        #   TYPEORM_ENTITIES: $TYPEORM_ENTITIES      
     steps:
       - checkout
       - add_ssh_keys:
