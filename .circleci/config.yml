@@ -163,7 +163,6 @@ jobs:
             - ./.circleci/ansible/inventory.txt 
       - destroy-environment 
  
-
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11     
@@ -189,7 +188,7 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment:
+      - destroy-environment
       - revert-migrations
 
   run-migrations:
@@ -410,6 +409,7 @@ jobs:
              else
                 echo "i am out"
             fi   
+
 workflows:
   default:
     jobs:
