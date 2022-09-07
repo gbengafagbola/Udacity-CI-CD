@@ -210,8 +210,12 @@ jobs:
           command: |
             cd backend
             # sudo npm cache clean -f
-            npm cache verify
-            npm install --cache /tmp/empty-cache
+
+            # npm cache verify
+            # npm install --cache /tmp/empty-cache
+
+            npm install
+            npm audit fix --audit-level=critical
             # sudo npm install -g n
             # sudo n stable
             # npm install
