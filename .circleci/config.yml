@@ -125,13 +125,14 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - run:
-          name: Install Dependencies
-          command: |
-            cat .circleci/ansible/inventory.txt
-            ls ~/project/.circleci/ansible/
-            cat ~/project/.circleci/ansible/inventory.txt
-            yum -y install tar gzip jq npm
+      - run: yum install -y tar gzip
+      # - run:
+      #     name: Install Dependencies
+      #     command: |
+      #       cat .circleci/ansible/inventory.txt
+      #       ls ~/project/.circleci/ansible/
+      #       cat ~/project/.circleci/ansible/inventory.txt
+      #       yum -y install tar gzip jq npm
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -156,11 +157,15 @@ jobs:
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --output text >> inventory.txt
+              --output text >> .circleci/ansible/inventory.txt
+              # --output text >> inventory.txt
+              cat .circleci/ansible/inventory.txt
+
       - persist_to_workspace:
           root: .
           paths:
-            - ./.circleci/ansible/inventory.txt 
+            - project/.circleci/ansible/inventory.txt
+            # - ./.circleci/ansible/inventory.txt 
       - destroy-environment 
 
 
@@ -183,7 +188,7 @@ jobs:
             apk add --upgrade bash
             apk add --update ansible
             apk add openssh-client
-            pip3 install awscli
+            # pip3 install awscli
       - run:
           name: Configure server
           command: |
@@ -203,9 +208,11 @@ jobs:
           name: Run migrations
           command: |
             cd backend
-            sudo npm cache clean -f
-            sudo npm install -g n
-            sudo n stable
+            # sudo npm cache clean -f
+            # sudo npm install -g n
+            # sudo n stable
+            npm install
+            npm run build
             npm run migrations > migrations_dump.txt
       - run:
           name: Send migration results to kvdn.io
@@ -222,6 +229,8 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - attach_workspace:
+          at: .   
       - run:
           name: Install tar/gzip utility
           command: |
@@ -230,6 +239,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            apk add --update ansible nodejs npm 
+            pip3 install awscli
             apt-get update && sudo apt-get install -yy less
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
@@ -248,11 +259,12 @@ jobs:
           command: |
             cd frontend
             cat .env
-            curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
-            yum -y install nodejs
-            npm install -g npm
-            npm install oauth2
-            npm install webpack
+            npm install
+            # curl -sL https://rpm.nodesource.com/setup_lts.x | bash -
+            # yum -y install nodejs
+            # npm install -g npm
+            # npm install oauth2
+            # npm install webpack
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
@@ -268,9 +280,9 @@ jobs:
           fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
       - attach_workspace:
           at: ~/   
-      - restore_cache:
-          keys:
-            - build-backend                
+      # - restore_cache:
+      #     keys:
+      #       - build-backend                
       - run: 
           name: View content of inventory.txt
           command: cat ~/project/.circleci/ansible/inventory.txt                      
