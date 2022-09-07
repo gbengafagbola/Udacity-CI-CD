@@ -215,11 +215,12 @@ jobs:
             # npm install --cache /tmp/empty-cache
 
             npm install
-            npm audit fix --audit-level=critical
+            # npm audit fix --audit-level=critical
+            npm audit fix --force
             # sudo npm install -g n
             # sudo n stable
             # npm install
-            # npm run build
+            npm run build
             npm run migrations > migrations_dump.txt
       - run:
           name: Send migration results to kvdn.io
