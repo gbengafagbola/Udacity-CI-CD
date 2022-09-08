@@ -200,26 +200,23 @@ jobs:
 
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      - image: circleci/node
     steps:
       - checkout
-      # - restore_cache:
-      #     keys: [backend-build]
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
             cd backend
             # sudo npm cache clean -f
-
             # npm cache verify
             # npm install --cache /tmp/empty-cache
-
-            npm install
-            npm audit fix --audit-level=critical
+            # npm audit fix --audit-level=critical
             # npm audit fix --force
             # sudo npm install -g n
             # sudo n stable
-            # npm install
+            npm install
             npm run build
             npm run migrations > migrations_dump.txt
       - run:
