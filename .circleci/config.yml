@@ -215,7 +215,7 @@ jobs:
             # npm install --cache /tmp/empty-cache
 
             npm install
-            # npm audit fix --audit-level=critical
+            npm audit fix --audit-level=critical
             # npm audit fix --force
             # sudo npm install -g n
             # sudo n stable
