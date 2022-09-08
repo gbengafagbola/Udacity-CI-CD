@@ -1,33 +1,101 @@
+# ---
+
+# - name: create backend directory
+#   become: yes
+#   file:
+#     path: /home/ubuntu/backend
+#     state: directory
+#     mode: 0755
+
+# - name: copy backend files
+#   become: yes
+#   copy:
+#     src: artifact.tar.gz
+#     dest: /home/ubuntu/backend/artifact.tar.gz
+
+# - name: unpack backend files
+#   become: yes
+#   shell: |
+#     cd /home/ubuntu/backend
+#     tar -vxf artifact.tar.gz
+#     rm -f artifact.tar.gz
+# - name: start app
+#   become: yes
+#   shell: |
+#     cd /home/ubuntu/backend
+#     npm install
+#     pm2 stop default
+#     pm2 start npm -- start
+#     cd dist
+#     pm2 start main.js --update-env
+
+
+# ---------------------------------
+
+
 ---
-
-- name: create backend directory
+- name: "update apt packages."
   become: yes
-  file:
-    path: /home/ubuntu/backend
-    state: directory
-    mode: 0755
+  apt:
+    update_cache: yes
 
-- name: copy backend files
+- name: "upgrade packages"
   become: yes
-  copy:
-    src: artifact.tar.gz
-    dest: /home/ubuntu/backend/artifact.tar.gz
+  apt:
+    upgrade: yes
+    
+- name: "install dependencies."
+  become: true
+  apt:
+    name: ["nodejs", "npm", "tar"]
+    state: latest
+    update_cache: yes
 
-- name: unpack backend files
+- name: "open the server"
   become: yes
   shell: |
-    cd /home/ubuntu/backend
-    tar -vxf artifact.tar.gz
-    rm -f artifact.tar.gz
-- name: start app
+   curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+   
+- name: "open the server2"
   become: yes
+  shell: |
+   sudo apt-get install -y nodejs
+- name: "copy backend folder"
+  become: true
+  copy:
+    src: /root/project/backend
+    dest: /home/ubuntu/
+
+# - name: Delete old PM2 process
+#   become: true
+#   ignore_errors: yes
+#   shell: |
+#     pm2 stop backend
+#     pm2 delete backend
+
+- name: Install Node Dependencies
   shell: |
     cd /home/ubuntu/backend
     npm install
-    pm2 stop default
-    pm2 start npm -- start
-    cd dist
-    pm2 start main.js --update-env
+    npm install --only=dev
+- name: Building backend service
+  shell: |
+    cd /home/ubuntu/backend
+    npm run build
+    npm run prestart:prod
+- name: Running backend service
+  shell: |
+    cd /home/ubuntu/backend    
+    pm2 start npm --no-automation --name "backend" -- run start
+
+
+
+
+
+
+
+
+
 
 
 
