@@ -193,9 +193,10 @@ jobs:
             # pip3 install awscli
       - run:
           name: Configure server
+          working_directory: ./.circleci/ansible
           command: |
             # cd .circleci/ansible
-            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+            ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment
       - revert-migrations
 
@@ -309,8 +310,9 @@ jobs:
             pip install awscli
       - run:
           name: Deploy backend
+          working_directory: ./.circleci/ansible
           command: |
-            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+            ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment
       - revert-migrations
 
@@ -476,7 +478,7 @@ jobs:
                 --stack-name InitialStack \
                 --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
                 --tags project=udapeople
-                
+
         - destroy-environment
         - revert-migrations
 
