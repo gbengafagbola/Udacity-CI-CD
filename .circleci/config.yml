@@ -311,7 +311,7 @@ jobs:
           name: Deploy backend
           command: |
             ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-      - destroy-env
+      - destroy-environment
       - revert-migrations
 
 
