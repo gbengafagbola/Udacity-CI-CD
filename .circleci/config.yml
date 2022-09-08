@@ -160,6 +160,7 @@ jobs:
               --output text >> inventory.txt
               # --output text >> .circleci/ansible/inventory.txt
               # --output text >> inventory.txt
+              cat inventory.txt
               # cat .circleci/ansible/inventory.txt
 
       - persist_to_workspace:
@@ -231,7 +232,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - run: yum install -y tar gzip
@@ -245,12 +246,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible nodejs npm 
-            pip3 install awscli
-            apt-get update && sudo apt-get install -yy less
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+            apk add --update tar gzip ansible nodejs npm curl jq
+            pip install awscli
       - run:
           name: Get backend url
           workding_directory: ./frontend
