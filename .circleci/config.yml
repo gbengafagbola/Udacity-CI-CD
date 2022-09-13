@@ -196,7 +196,7 @@ jobs:
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible all --list-hosts
             ansible-playbook \
-              -i .circleci/ansible/inventory.txt \
+              -i ../.circleci/ansible/inventory.txt \
               .circleci/ansible/configure-server.yml
       - run:
           name: Install AWS cli for rollback
