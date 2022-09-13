@@ -1,195 +1,81 @@
-# ---
-
-# - name: create backend directory
-#   become: yes
-#   file:
-#     path: /home/ubuntu/backend
-#     state: directory
-#     mode: 0755
-
-# - name: copy backend files
-#   become: yes
-#   copy:
-#     src: artifact.tar.gz
-#     dest: /home/ubuntu/backend/artifact.tar.gz
-
-# - name: unpack backend files
-#   become: yes
-#   shell: |
-#     cd /home/ubuntu/backend
-#     tar -vxf artifact.tar.gz
-#     rm -f artifact.tar.gz
-# - name: start app
-#   become: yes
-#   shell: |
-#     cd /home/ubuntu/backend
-#     npm install
-#     pm2 stop default
-#     pm2 start npm -- start
-#     cd dist
-#     pm2 start main.js --update-env
-
-
-# ---------------------------------
-
-
 ---
-- name: "update apt packages."
-  become: yes
-  apt:
-    update_cache: yes
-
-- name: "upgrade packages"
-  become: yes
-  apt:
-    upgrade: yes
-    
-- name: "install dependencies."
+- name: "Update apt packages"
   become: true
   apt:
-    name: ["nodejs", "npm", "tar"]
-    state: latest
-    update_cache: yes
+    update_cache: "yes"
 
-- name: "open the server"
-  become: yes
-  shell: |
-   curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-   
-- name: "open the server2"
-  become: yes
-  shell: |
-   sudo apt-get install -y nodejs
-- name: "copy backend folder"
+- name: "Upgrade apt packages"
   become: true
+  apt:
+    upgrade: "yes"
+
+- name: "install dependencies"
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    update_cache: "yes"
+
+- name: Creates directory
+  file:
+    path: /home/ubuntu/backend
+    state: directory
+
+- name: Transfer backend files to cloud server
   copy:
     src: /root/project/backend
-    dest: /home/ubuntu/
+    dest: /home/ubuntu
 
-# - name: Delete old PM2 process
-#   become: true
-#   ignore_errors: yes
-#   shell: |
-#     pm2 stop backend
-#     pm2 delete backend
+- name: make sure the latest npm is installed
+  become: true
+  command: npm install -g n
+  args:
+    chdir: /home/ubuntu/backend
 
-- name: Install Node Dependencies
+- name: "install pm2"
+  become: yes
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: "install typescript"
+  become: yes
+  npm:
+    name: typescript
+    global: yes
+    production: yes
+    state: present
+
+- name: " update dependencies"
+  become: true
   shell: |
     cd /home/ubuntu/backend
+    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+    apt-get install -y nodejs  
+    npm install -g n
     npm install
-    npm install --only=dev
-- name: Building backend service
-  shell: |
-    cd /home/ubuntu/backend
-    npm run build
-    npm run prestart:prod
-- name: Running backend service
-  shell: |
-    cd /home/ubuntu/backend    
-    pm2 start npm --no-automation --name "backend" -- run start
+- name: "build package"
+  become: true
+  command: npm run build
+  args:
+    chdir: /home/ubuntu/backend
 
+- name: "Executing node"
+  become: true
+  command: pm2 start npm --name backend -- run start
+  args:
+    chdir: /home/ubuntu/backend
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ---
-# - name: "upgrade packages."
-#   become: true
-#   apt:
-#     upgrade: "yes"
-
-# - name: "install dependencies."
-#   become: true
-#   apt:
-#     name: ["nodejs", "npm", "unzip"]
-#     state: latest
-#     update_cache: yes
-
-# - name: "install pm2"
-#   become: true
-#   npm:
-#     name: pm2
-#     global: yes
-#     production: yes
-#     state: present
-
-# - name: "create app directory"
-#   file:
-#     path: ~/backend
-#     state: directory
-
-# - name: "copy backend files"
-#   copy:
-#     src: ~/project/backend
-#     dest: /home/ubuntu/
-
-# - name: Install Node 
-#   shell: |
-#     cd /home/ubuntu/backend
-#     npm install
-    
-# - name: Build package
-#   shell: |
-#     cd /home/ubuntu/backend
-#     npm run build
-#     cat .env
-#     npm run prestart:prod
-# - name: Start PM2
-#   shell: |
-#     cd /home/ubuntu/backend
-#     pm2 start npm --no-automation --name "backend" -- run start
-# - name: start pm2 for dist/main.js
-#   become: no
-#   shell: pm2 start main.js
-#   args:
-#     chdir: /home/ubuntu/backend/dist
-
-
-# ---
-#   - name: "show remote environment"
-#     shell: env
-#   - name: "copy backend binaries"
-#     become: yes
-#     synchronize:
-#       src: ../../backend/dist
-#       dest: /home/ubuntu/uda_app
-#       recursive: true
-#   - name: "copy node_modules"
-#     become: yes
-#     synchronize:
-#       src: ../../backend/node_modules
-#       dest: /home/ubuntu/uda_app
-#       recursive: true
-#   - name: "delete anything that might already be running"
-#     become: true
-#     command: pm2 delete all
-#     ignore_errors: true
-#   - name: "start server"
-#     become: true
-#     command: pm2 start -f ./main.js
-#     args:
-#       chdir: /home/ubuntu/uda_app/dist
-#     environment:
-#      ENVIRONMENT: production
-#      TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
-#      TYPEORM_MIGRATIONS_DIR: "./migrations"
-#      TYPEORM_MIGRATIONS: "./migrations/*.js"
-#      TYPEORM_ENTITIES: "./modules/domain/**/*.entity.js"
-#      TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
-#      TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
-#      TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
-#      TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
-#      TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
+  environment:
+    ENVIRONMENT: production
+    NODE_ENV: production
+    TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
+    TYPEORM_MIGRATIONS_DIR: "{{ lookup('env','TYPEORM_MIGRATIONS_DIR') }}"
+    TYPEORM_MIGRATIONS: "{{ lookup('env','TYPEORM_MIGRATIONS') }}"
+    TYPEORM_ENTITIES: "{{ lookup('env','TYPEORM_ENTITIES') }}"
+    TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST') }}"
+    TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT') }}"
+    TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+    TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+    TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE') }}"
