@@ -165,7 +165,7 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: linuxbrew/brew
     steps:
       - checkout
       - add_ssh_keys:
@@ -292,11 +292,12 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: linuxbrew/brew
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["ba:b9:66:3f:1e:a8:80:12:f7:9e:7c:7e:64:2c:6d:c8"]
+          fingerprints: 
+            - "ba:b9:66:3f:1e:a8:80:12:f7:9e:7c:7e:64:2c:6d:c8"
           # fingerprints: ["c4:57:75:d5:b2:b1:ba:2b:ac:1c:78:99:64:d9:f9:32"]
       - attach_workspace:
           at: ~/
